@@ -1,5 +1,0 @@
-ficheiro de texto nº2 
-
-mais coisas 
-
-cada enter é um insert
