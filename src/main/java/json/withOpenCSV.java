@@ -56,6 +56,8 @@ class Horario {
 		this.unidadeCurricular = unidadeCurricular;
 		this.turno = turno;
 	}
+
+	//teste
 }
 	 
 
