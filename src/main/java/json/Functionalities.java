@@ -20,7 +20,7 @@ public class Functionalities {
 
     private static final Logger logger= Logger.getLogger(Functionalities.class.getName());
 
-    public void CSVtoJSON() throws IOException {
+    public void csvToJson() throws IOException {
         try {
             JFileChooser fileChooser = new JFileChooser();
             int returnValue = fileChooser.showOpenDialog(null);
@@ -44,7 +44,6 @@ public class Functionalities {
             reader.close();
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            JsonElement jsonElement = gson.toJsonTree(aulas);
 
             // Criar um objeto JsonObject para adicionar os nomes das colunas ao JSON
             JSONObject jsonObject = new JSONObject();
@@ -55,12 +54,11 @@ public class Functionalities {
                     linhaObjeto.addProperty(nomesColunas[i], campos[i]);
                 }
                 jsonArray.add(linhaObjeto);
-                //System.out.println(jsonArray);
             }
             jsonObject.put("aulas", jsonArray);
 
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Qual é o Path do ficheiro json onde pretende guardar?");
+            logger.log(Level.INFO, "Por favor indique o PATH onde pretende guardar o ficheiro JSON: ");
             String path = scanner.nextLine();
 
             FileWriter writer = new FileWriter(path);
@@ -73,7 +71,7 @@ public class Functionalities {
         }
     }
 
-    public void JSONtoCSV() {
+    public void jsonToCsv() {
         // Class data members
         String jsonString;
         JSONObject jsonObject;
@@ -98,7 +96,7 @@ public class Functionalities {
 
             // Step 4: Create a new CSV file using the package java.io.File
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Qual é o Path do ficheiro json onde pretende guardar?");
+            logger.log(Level.INFO, "Por favor indique o PATH onde pretende guardar o ficheiro CSV: ");
             String path = scanner.nextLine();
             File file = new File(path);
 
