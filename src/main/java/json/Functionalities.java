@@ -20,6 +20,9 @@ import java.util.logging.Logger;
 
 public class Functionalities {
 
+    private String erroCSV="Não foi possível criar o ficheiro CSV";
+    private String erroJSON="Não foi possível criar o ficheiro JSON";
+
     private static final Logger logger= Logger.getLogger(Functionalities.class.getName());
 
     public void csvToJson() throws IOException {
@@ -28,18 +31,9 @@ public class Functionalities {
             logger.log(Level.INFO, "Por favor indique o PATH do ficheiro que pretende converter para JSON: ");
             String filePath = scanner1.nextLine();
 
-            BufferedReader reader;
-            try {
-                URL url = new URL(filePath);
-                String newPath = copyURLToFile(filePath, "CSV");
-                if (newPath==null)
-                    logger.log(Level.INFO, "Não foi possível guardar ficheiro CSV");
-                reader = new BufferedReader(new FileReader(newPath));
-                logger.log(Level.INFO, "Escolhido ficheiro remoto");
-            } catch (MalformedURLException e){
-                reader = new BufferedReader(new FileReader(filePath));
-                logger.log(Level.INFO, "Escolhido ficheiro local");
-            }
+            BufferedReader reader = getReader(filePath);
+            if (reader==null)
+                return;
             // Ler a primeira linha e definir os nomes das colunas
             String primeiraLinha = reader.readLine();
             String[] nomesColunas = primeiraLinha.split(";");
@@ -77,91 +71,114 @@ public class Functionalities {
             logger.log(Level.INFO, "Ficheiro JSON criado com sucesso");
 
         } catch (IOException e){
-            logger.log(Level.INFO, "Não foi possível criar ficheiro JSON");
+            logger.log(Level.INFO, erroJSON);
         }
     }
 
     public void jsonToCsv() {
-        // Class data members
+
         String jsonString;
         JSONObject jsonObject;
-
-        // Try block to check for exceptions
         try {
             Scanner scanner1 = new Scanner(System.in);
             logger.log(Level.INFO, "Por favor indique o PATH do ficheiro que pretende converter para CSV: ");
             String filePath = scanner1.nextLine();
 
-            // Step 1: Reading the contents of the JSON file using readAllBytes() method and storing the result in a string
-            try {
-                URL url = new URL(filePath);
-                String newPath = copyURLToFile(filePath, "JSON");
-                if (newPath==null)
-                    logger.log(Level.INFO, "Não foi possível guardar ficheiro JSON");
-                try {
-                    jsonString = new String(Files.readAllBytes(Paths.get(newPath)));
-                    logger.log(Level.INFO, "Escolhido ficheiro remoto");
-                }catch (IOException e1){
-                    logger.log(Level.INFO, "Não foi possível criar ficheiro CSV");
-                    return;
-                }
-            } catch (MalformedURLException e){
-                try {
-                    jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
-                    logger.log(Level.INFO, "Escolhido ficheiro local");
-                }catch (IOException e2){
-                    logger.log(Level.INFO, "Não foi possível criar ficheiro CSV");
-                    return;
-                }
-            }
-
-            // Step 2: Construct a JSONObject using above string
+            jsonString = getJsonString(filePath);
+            if (jsonString==null)
+                return;
             jsonObject = new JSONObject(jsonString);
-
-            // Step 3: Fetching the JSON Array test from the JSON Object
             JSONArray docs = jsonObject.getJSONArray("aulas");
 
-            // Step 4: Create a new CSV file using the package java.io.File
             Scanner scanner2 = new Scanner(System.in);
             logger.log(Level.INFO, "Por favor indique o PATH onde pretende guardar o ficheiro CSV: ");
             String path = scanner2.nextLine();
             File file = new File(path);
 
-            // Step 5: Produce a comma delimited text from the JSONArray of JSONObjects and write the string to the newly created CSV file
             String csvString = CDL.toString(docs);
             FileUtils.writeStringToFile(file, csvString);
 
             logger.log(Level.INFO, "Ficheiro CSV criado com sucesso");
         } catch (IOException e) {
-            logger.log(Level.INFO, "Não foi possível criar ficheiro CSV");
+            logger.log(Level.INFO, erroCSV);
         }
     }
 
     public String copyURLToFile(String urls, String type) throws IOException {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Qual é o Path do ficheiro " + type + " onde pretende guardar?");
+        logger.log(Level.INFO, "Por favor indique o Path do ficheiro " + type + " onde pretende guardar: ");
         String path = scanner.nextLine();
         FileWriter writer;
         try {
             URL url = new URL(urls);
             InputStream input = url.openStream();
-            if (type=="CSV") {
+            if (type.equals("CSV")) {
                 writer = new FileWriter(path);
-            } else if (type=="JSON"){
+            } else if (type.equals("JSON")){
                 writer = new FileWriter(path + ".json");
             } else {
                 return null;
             }
-                char[] buffer = new char[4096];
-                int n = 0;
-                while (-1 != (n = new InputStreamReader(input).read(buffer))) {
-                    writer.write(buffer, 0, n);
-                }
+            char[] buffer = new char[4096];
+            int n = 0;
+            while (-1 != (n = new InputStreamReader(input).read(buffer))) {
+                writer.write(buffer, 0, n);
+            }
             input.close();
             writer.close();
             return path + ".json";
         } catch (IOException ioEx) {
             return null;
         }
+    }
+
+    public BufferedReader getReader(String filePath) throws FileNotFoundException {
+        BufferedReader reader;
+        try {
+            URL url = new URL(filePath);
+            String newPath = copyURLToFile(filePath, "CSV");
+            if (newPath == null) {
+                logger.log(Level.INFO, erroCSV);
+                return null;
+            }
+            reader = new BufferedReader(new FileReader(newPath));
+            logger.log(Level.INFO, "Escolhido ficheiro remoto");
+        } catch (IOException e) {
+            reader = new BufferedReader(new FileReader(filePath));
+            logger.log(Level.INFO, "Escolhido ficheiro local");
+        }
+        return reader;
+    }
+
+    public String getJsonString (String filePath) {
+        String jsonString;
+        try {
+            URL url = new URL(filePath);
+            String newPath = copyURLToFile(filePath, "JSON");
+
+            if (newPath == null) {
+                logger.log(Level.INFO, erroJSON);
+                return null;
+            }
+            try {
+                jsonString = new String(Files.readAllBytes(Paths.get(newPath)));
+                logger.log(Level.INFO, "Escolhido ficheiro remoto");
+            } catch (IOException e1) {
+                logger.log(Level.INFO, erroCSV);
+                return null;
+            }
+        } catch (MalformedURLException e) {
+            try {
+                jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
+                logger.log(Level.INFO, "Escolhido ficheiro local");
+            } catch (IOException e2) {
+                logger.log(Level.INFO, erroCSV);
+                return null;
+            }
+        } catch (IOException e) {
+            logger.log(Level.INFO, erroCSV);
+            return null;
+        }
+        return jsonString;
     }
 }
